@@ -15,6 +15,7 @@ class CartPage:
     def __init__(self, page: Page):
         self.page = page
         self.cart_items = page.locator(".cart_item")
+        self.checkout_button = page.locator("[data-test='checkout']")
 
     def get_cart_item(self, product_name: str):
         """Return the cart item containing the specified product."""
@@ -33,3 +34,7 @@ class CartPage:
     def get_cart_item_count(self):
         """Return the number of products currently displayed in the cart."""
         return self.cart_items.count()
+
+    def proceed_to_checkout(self):
+        """Proceed from the shopping cart to checkout."""
+        self.checkout_button.click()
