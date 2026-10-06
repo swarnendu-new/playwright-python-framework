@@ -29,8 +29,8 @@ def pytest_addoption(parser):
         "--browser",
         action="store",
         default="chromium",
-        choices=["chromium", "firefox", "webkit"],
-        help="Browser to run tests: chromium, firefox, or webkit",
+        choices=["chromium", "chrome", "firefox", "webkit"],
+        help="Browser to run tests: chromium, chrome, firefox, or webkit",
     )
 
     parser.addoption(
@@ -57,11 +57,18 @@ def page(request):
     playwright = sync_playwright().start()
 
     # Dynamically select chromium, firefox, or webkit.
-    browser_type = getattr(playwright, browser_name)
-
     # Playwright expects headless=True to hide the browser.
     # Therefore --headed reverses the headless value.
-    browser = browser_type.launch(headless=not headed)
+    # Chrome is a branded Chromium browser and is launched using a channel.
+    if browser_name == "chrome":
+        browser = playwright.chromium.launch(
+            channel="chrome",
+            headless=not headed,
+        )
+    else:
+        # Chromium, Firefox, and WebKit map directly to Playwright browser types.
+        browser_type = getattr(playwright, browser_name)
+        browser = browser_type.launch(headless=not headed)
 
     context = browser.new_context()
     page = context.new_page()
