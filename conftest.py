@@ -1,4 +1,5 @@
 import pytest
+from pathlib import Path
 from playwright.sync_api import sync_playwright
 """
 conftest.py is automatically discovered by pytest and is used to define
@@ -41,6 +42,20 @@ def pytest_addoption(parser):
     )
 
 
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    """
+    Store the pytest result for each test phase.
+
+    This allows fixtures to determine whether a test passed or failed
+    and perform failure-specific actions such as taking screenshots.
+    """
+    outcome = yield
+    report = outcome.get_result()
+
+    setattr(item, f"rep_{report.when}", report)
+
+
 @pytest.fixture
 def page(request):
     """
@@ -76,7 +91,26 @@ def page(request):
     # Test execution pauses here and receives the Page object.
     yield page
 
-    # Cleanup runs after the test completes, even if the test fails.
+    print("DEBUG: returned to fixture after test")
+
+    # Capture a screenshot automatically when the test itself fails.
+    if hasattr(request.node, "rep_call") and request.node.rep_call.failed:
+
+        # Create the screenshots directory if it does not already exist.
+        screenshot_dir = Path("test-results/screenshots")
+        screenshot_dir.mkdir(parents=True, exist_ok=True)
+
+        # Use the pytest test name as the screenshot filename.
+        screenshot_path = screenshot_dir / f"{request.node.name}.png"
+
+        page.screenshot(
+            path=str(screenshot_path),
+            full_page=True,
+        )
+
+        print(f"\nFailure screenshot saved: {screenshot_path}")
+
+    # Normal browser cleanup.
     context.close()
     browser.close()
     playwright.stop()
