@@ -2,7 +2,12 @@ from playwright.sync_api import Page
 
 
 class LoginPage:
-    """Page object for the saucedemo login page"""
+    """
+    Page object for the saucedemo login page
+    Encapsulates login-page locators and reusable actions so tests
+    describe WHAT to validate while the Page Object handles HOW
+    to interact with the UI.
+    """
 
     URL = "https://www.saucedemo.com/"
 
@@ -23,3 +28,7 @@ class LoginPage:
         self.username.fill(username)
         self.password.fill(password)
         self.login_button.click()
+
+    def get_error_message(self):
+        """Return the login error message displayed after an unsuccessful login."""
+        return self.page.locator("[data-test='error']").inner_text()

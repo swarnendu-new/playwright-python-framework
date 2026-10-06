@@ -33,3 +33,28 @@ def test_valid_login(page, username, password, expected_url):
 
     # Playwright expect() auto-retries until URL matches or timeout occurs.
     expect(page).to_have_url(expected_url)
+
+# Data-driven negative testing avoids separate test methods for each error case.
+
+
+@pytest.mark.parametrize(
+    "username,password,expected_error",
+    [
+        ("invalid_user", "wrong_password", "Username and password do not match"),
+        ("", "secret_sauce", "Username is required"),
+        ("standard_user", "", "Password is required"),
+    ],
+)
+def test_invalid_login(page, username, password, expected_error):
+    """Verify invalid login scenarios display the expected error message."""
+
+    login_page = LoginPage(page)
+
+    login_page.open()
+    login_page.login(username, password)
+
+    # Page Object returns the displayed error as a Python string.
+    actual_error = login_page.get_error_message()
+
+    # Validate meaningful error text instead of SauceDemo's "Epic sadface:" prefix.
+    assert expected_error in actual_error
